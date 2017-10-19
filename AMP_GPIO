@@ -1,0 +1,65 @@
+#!/bin/bash
+PIN="22" DIR="/sys/class/gpio/gpio" TICK=0 STATE=0 AMPPIN="26"
+
+if [ ! -d "$DIR$PIN" ]; then
+  sudo sh -c "echo "$PIN" > /sys/class/gpio/export"
+  sudo sh -c "echo "out" > /sys/class/gpio/gpio'$PIN'/direction"
+fi
+
+if [ ! -d "$DIR$AMPPIN" ]; then
+  sudo sh -c "echo "$AMPPIN" > /sys/class/gpio/export"
+  sudo sh -c "echo "out" > /sys/class/gpio/gpio'$AMPPIN'/direction"
+fi
+
+while true; do
+
+  #red led is on when music is playing
+  #if mpc status | grep playing > /dev/null
+  #then
+  if (cat /proc/asound/card1/pcm0p/sub0/status | grep state > /dev/null); then
+    sudo sh -c "echo "1" > /sys/class/gpio/gpio$PIN/value"
+  else
+    sudo sh -c "echo "0" > /sys/class/gpio/gpio$PIN/value"
+  fi
+
+#################################################################
+
+  case "$STATE" in
+    1)
+      #amp is on but stopped playing
+      #if !(mpc status | grep playing > /dev/null); then
+      if !(cat /proc/asound/card1/pcm0p/sub0/status | grep state > /dev/null); then
+        echo "stopped playing"
+	TICK=0
+	STATE=2
+      fi 
+    ;;
+    2)
+      #started again inside two minutes
+      #if (mpc status | grep playing > /dev/null); then
+      if (cat /proc/asound/card1/pcm0p/sub0/status | grep state > /dev/null); then
+        #TICK=0
+        echo "started play again < 30 sec"
+        STATE=1
+      elif ((TICK > 120)); then
+        echo "2 min passed, poweroff"
+        sudo sh -c "echo "0" > /sys/class/gpio/gpio$AMPPIN/value"
+        STATE=0
+      fi
+
+      TICK=$((TICK+1))
+      #echo "$TICK"
+    ;;
+    *)
+      #turned off
+      #if (mpc status | grep playing > /dev/null); then
+      if (cat /proc/asound/card1/pcm0p/sub0/status | grep state > /dev/null); then
+        sudo sh -c "echo "1" > /sys/class/gpio/gpio$AMPPIN/value"
+        STATE=1
+        echo "started playing"
+      fi
+  esac
+
+  sleep 1
+
+done
