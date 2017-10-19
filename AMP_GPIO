@@ -35,11 +35,11 @@ while true; do
       fi 
     ;;
     2)
-      #started again inside two minutes
+      #started again within two minutes
       #if (mpc status | grep playing > /dev/null); then
       if (cat /proc/asound/card1/pcm0p/sub0/status | grep state > /dev/null); then
         #TICK=0
-        echo "started play again < 30 sec"
+        echo "started playing within 2 minutes"
         STATE=1
       elif ((TICK > 120)); then
         echo "2 min passed, poweroff"
