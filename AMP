@@ -1,0 +1,13 @@
+#!/bin/bash
+ACT="$1" PIN="26" DIRECTORY="/sys/class/gpio/gpio$PIN"
+if [ ! -d "$DIRECTORY" ]; then
+  sudo sh -c "echo "$PIN" > /sys/class/gpio/export"
+  sudo sh -c "echo "out" > /sys/class/gpio/gpio'$PIN'/direction"
+fi
+
+if [ "$ACT" == "on" ]; then
+  sudo sh -c "echo "1" > /sys/class/gpio/gpio$PIN/value"
+elif [ "$ACT" == "off" ]; then
+  sudo sh -c "echo "0" > /sys/class/gpio/gpio$PIN/value"
+fi
+
